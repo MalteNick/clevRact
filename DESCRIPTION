@@ -1,0 +1,59 @@
+Package: clevRact
+Type: Package
+Title: Interactive Analysis of Cancer Clone Evolution and Trajectories
+Version: 0.99.0
+Authors@R:
+    c(
+        person(
+            given = "Malte",
+            family = "Nick",
+            email = "malte.nick@uni-muenster.de",
+            role = c("aut", "cre")
+        ),
+        person(
+            given = "Sarah",
+            family = "Sandmann",
+            role = "aut"
+        )
+    )
+Description: Provides an interactive Shiny application for exploring cancer
+    clone evolution from longitudinal genomic variant data. The package
+    supports preparation, visualization, and statistical analysis of clonal
+    trajectories and mutational signatures. It is intended to make these
+    analyses accessible through an interactive and reproducible workflow.
+License: LGPL-3
+URL: https://github.com/MalteNick/clevRact
+BugReports: https://github.com/MalteNick/clevRact/issues
+Encoding: UTF-8
+LazyData: false
+Depends:
+    R (>= 4.6.0)
+Imports:
+    clevRvis,
+    data.table,
+    dplyr,
+    DT,
+    ggplot2,
+    gtools,
+    hash,
+    igraph,
+    rlang,
+    shiny,
+    shinyalert,
+    shinycustomloader,
+    shinyjs,
+    shinythemes,
+    shinyWidgets,
+    SparseArray,
+    stringr
+Suggests:
+    BiocStyle,
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+biocViews:
+    Software,
+    SomaticMutation,
+    Visualization
+Config/testthat/edition: 3

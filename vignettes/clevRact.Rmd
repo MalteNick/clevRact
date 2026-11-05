@@ -1,0 +1,553 @@
+---
+title: "Using clevRact"
+author: "Malte Nick"
+date: "`r Sys.Date()`"
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Using clevRact}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+**AI disclosure:** This documentation was generated with the assistance of AI
+coding agents.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+```
+
+# Introduction
+
+`clevRact` (*clonal evolution in R analysing conserved trajectories*) provides
+an interactive Shiny application for exploratory analysis of conserved patterns
+in cohorts of patient-specific tumor phylogenies. The application is designed
+around a left-to-right workflow: raw input data are loaded or created first,
+then transformed into a processed representation, summarized with cohort
+statistics, analysed for recurrent linear signatures, and finally used to
+approximate conserved branching trajectories.
+
+# Installation and launching the app
+
+The development repository is <https://github.com/MalteNick/clevRact>.
+Once the package is available through Bioconductor, it can be installed with:
+
+```{r installation, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
+BiocManager::install("clevRact")
+```
+
+The package is intended for interactive use. The main entry point returns a
+Shiny application object without starting a server:
+
+```{r create-app}
+library(clevRact)
+app <- clevRactApp()
+class(app)
+```
+
+Start the application from an interactive R session:
+
+```{r launch-app, eval=FALSE}
+shiny::runApp(app)
+```
+
+For an editor or remote session where the browser is opened separately, choose
+a local address and port:
+
+```{r launch-localhost, eval=FALSE}
+shiny::runApp(app, host = "127.0.0.1", port = 3838, launch.browser = FALSE)
+```
+
+Then open `http://127.0.0.1:3838` in a browser. Stop the application with Escape
+in the R console or Ctrl+C in a terminal.
+
+The following sections follow the five tabs of the application from left to
+right. The vignette does not launch the Shiny interface during package checks.
+Instead, it documents1 the expected input format and the main analysis steps so that the
+workflow can be reproduced with the example files installed in the package.
+
+# Example input file
+
+`clevRact` installs `synthetic_10_patients.csv` in `inst/extdata`. This artificial
+cohort can be uploaded directly in the application and provides coordinates for
+automatic annotation. The worked example below describes its construction and
+expected results.
+
+```{r example-files}
+example_files <- list.files(
+    system.file("extdata", package = "clevRact"),
+    pattern = "[.]csv$",
+    full.names = TRUE
+)
+basename(example_files)
+```
+
+# Input data format
+
+Input files are semicolon-separated CSV files. Each row describes one variant in
+one clone of a patient-specific tumor tree. The semicolon separator is used so
+that commas can remain part of cell values when needed.
+
+```{r inspect-example}
+example_input_file <- system.file(
+    "extdata",
+    "synthetic_10_patients.csv",
+    package = "clevRact"
+)
+
+example_input <- utils::read.csv(example_input_file, sep = ";", nrows = 3)
+example_input
+```
+
+The required columns are:
+
+* `Patient.ID`: patient identifier.
+* `Variant`: variant label or identifier.
+* `Clone`: positive integer identifying the clone.
+* `Parent`: parent clone identifier. The value `0` represents the normal-cell
+  root.
+* `Variant.Type`: one of `CNV_del`, `CNV_dup`, `CNV_loh`, `SNV/INDEL`, or
+  `NA`.
+* `Chromosome`: chromosome `1`--`22`, `X`, `Y`, or `NA`.
+* `Start` and `End`: genomic positions or `NA`.
+
+Optional time-point columns can be added as `T1`, `T2`, and so on. A value of
+`TRUE` means that a clone is observed at this time point; `FALSE` means that it
+is not observed. The `Clone` and `Parent` columns must describe a valid rooted
+tree for each patient. All rows belonging to one clone must have the same
+parent. The root has identifier `0` and carries no variant row.
+
+Separate rows can carry the same `Variant` label. They remain distinct event
+occurrences, including when they belong to the same clone. For example, two
+NOTCH1 mutations can share the label `NOTCH1` without being merged into one
+event. Choosing an enumeration option during preprocessing changes those labels
+and therefore changes which events can match across patients.
+
+# App workflow
+
+## Input data
+
+The *Input Data* tab is used to create, load, inspect, and edit raw cohort data.
+Users can start from a blank dataset or load an existing CSV file. Patients and
+variants can be added or removed, the number of time points can be changed, and
+the edited cohort can be exported again as a CSV file.
+
+For visual inspection, the app uses `clevRvis` to display patient-specific tumor
+trees as shark and dolphin plots. If only Boolean time-point observations are
+available, `clevRact` creates compatible cancer-cell-fraction-like values for
+visualization. These values are used for plotting and are not interpreted as
+measured biological quantities.
+
+## Processed data
+
+The *Processed Data* tab transforms the raw table into the representation used
+for signature and trajectory computation. This step is intentionally separate
+from data input, because preprocessing choices can change the level of detail at
+which variants are analysed. After changing the raw data or these settings,
+click *Generate Processed Data* again.
+
+Important settings include:
+
+* generating variant labels from supplied labels or from GRCh37/GRCh38 genomic
+  positions;
+* representing SNVs/INDELs by gene or by exact chromosome-position labels;
+* representing CNVs by chromosome, chromosome arm, or exact interval;
+* retaining or enumerating repeated variant labels;
+* summarizing same-type CNVs occurring in the same clone and chromosome.
+
+Set *Generate variant labels? = No* to keep the supplied `Variant` identifiers.
+Automatic GRCh37 or GRCh38 encoding uses the genomic coordinates and variant
+types in the input. Select the reference assembly matching the input coordinates.
+The packaged gene mappings include chromosome X and Y.
+
+For analyses of repeated events, *No differentiation* retains shared labels.
+Enumeration distinguishes occurrences in their identifiers and is useful when
+that distinction is intended.
+
+For regional CNV analysis, select *Use exact CNVs*, *No differentiation*, and
+*Summarize same-type CNVs within same clone and chromosome? = No*. Exact CNV
+identifiers retain the alteration type, chromosome and interval boundaries;
+chromosome-level labels discard the boundaries needed for regional analysis.
+
+During preprocessing, rows that cannot be represented consistently under the
+selected settings may be excluded. The app reports these changes so that users
+can compare the processed data with the original input.
+
+## Data statistics
+
+The *Data Statistics* tab summarizes the processed cohort. These summaries
+are useful for biological inspection, but also for judging the computational
+scale of later steps. In particular, the number of patients, clones, variants,
+and recurrent variant labels directly influences how many candidate signatures
+and trajectories can be generated.
+
+The tab reports, among other summaries, patient counts by clone number, patient
+counts by variant number, chromosome distributions, variant recurrence across
+patients, CNV/SNV proportions, and the most frequent variants.
+
+## Signature computation
+
+An evolutionary signature is a recurrent linear sequence of variants observed in
+the processed tumor trees. `clevRact` enumerates possible linear paths through
+each patient tree and records in which patients identical variant sequences are
+observed. This means that signatures describe conserved orders of events rather
+than only sets of co-occurring variants.
+
+The user settings on the left side of the tab determine the actual computation:
+
+* *Minimum number of occurrences* determines the patient support required for
+  signatures to appear in the result table.
+* *Maximum signature length* controls the longest linear sequence that is
+  generated. Increasing this value can quickly enlarge the search space.
+* *Allow sequences within clone* controls whether multiple variants assigned to
+  the same clone may be ordered within one signature.
+
+The filter controls above the result table are applied after computation. They
+are useful for exploration because they do not require recomputing the complete
+signature table.
+
+Significance estimation is also separated from enumeration. This allows users to
+compare available significance measures without recomputing the candidate
+signatures. The app adds relative occurrence and p-value information to the
+signature table. The dropdown offers:
+
+* *Uniform label probabilities*: each distinct alteration label in a patient
+  receives the same assignment probability under the approximate null model.
+* *Multiplicity-adjusted label probabilities*: assignment probabilities are
+  additionally multiplied by the numbers of matching event occurrences within
+  that patient.
+
+Both methods use an upper-tail Poisson-binomial enrichment probability for the
+observed patient support. The default is *Uniform label probabilities*.
+Occurrence counts refer to distinct supporting patients; multiple matches in one
+patient contribute one supporter. Relative occurrence is conditional on patients
+containing the required alteration labels with sufficient multiplicity, rather
+than on the complete cohort.
+
+### Optional CNV region analysis
+
+After computing signatures, *Analyze shared CNV regions* replaces exact CNV
+labels by alternative regional labels. It partitions each chromosome using the
+start positions and the positions immediately after the ends of all exact CNVs
+in the processed cohort. The partition is global across those patients and CNV
+types. Each regional label retains the type of the source CNV.
+
+For example, two overlapping deletions with different exact identifiers can
+support the same regional deletion-to-gene signature. A source CNV spanning
+several regions produces alternative regional signatures. These are separate
+descriptions of the same event. Original patient trees and original signatures
+remain unchanged.
+
+The step uses the complete extracted signature catalogue, including signatures
+below the original result-table support threshold. It pools supporting patient
+IDs for identical regional signatures, counts each patient once, and applies
+the current *Minimum number of occurrences* threshold to the pooled results.
+This allows individually rare exact CNVs to contribute to a recurrent region.
+The regional table is separate from the original signature table and can be
+saved with *Export region signatures*. Source p-values and relative frequencies
+are not transferred to the pooled results.
+
+Exact identifiers have a format such as `CNV_del_9_21600000_22050000` and can
+also be supplied directly with automatic label generation disabled. Interval
+endpoints are inclusive. If no recognizable exact CNV identifiers are present,
+the application shows an error notification. In a mixed catalogue, only
+recognizable exact CNV labels are regionalized. Chromosome-arm labels alone
+cannot supply the missing boundaries.
+
+## Trajectory approximation
+
+The *Trajectory Approximation* tab recombines previously computed linear
+signatures into branching structures called trajectories. The trajectory search
+uses the current filters from the *Signature Computation* tab, whether or not
+the filtered table view is enabled. The signature filters can therefore be used
+as a scalability step before the more expensive branching search is started.
+
+The main trajectory settings are:
+
+* *Minimum number of occurrences*: minimum number of patients in which an
+  intermediate or completed trajectory must be observed.
+* *Number of recombinations*: maximum number of signature-recombination rounds.
+  Higher values allow larger branching structures, but increase the number of
+  pairwise combinations.
+* *Include independent branches through the root?*: enables additional recurrent
+  trajectory bases whose branches meet at the variant-free root. It is enabled
+  by default. Disabling it leaves ordinary recombination of linear signatures
+  available.
+* *Allow the same variant to form multiple subclones*: allows the same variant
+  label to occur on separate branches, representing parallel occurrence in
+  distinct subpopulations.
+
+Independent-root bases are computed directly from the processed cohort and
+must meet the trajectory patient-support threshold. They can be found even if
+no linear signature passes the filters. The repeated-label option must also be
+enabled to find, for example, two parallel NOTCH1 events. Each supporting
+patient must contain separate event occurrences in the required branches.
+
+The recombination setting limits subsequent extensions by retained linear
+signatures. Independent-root initialization is a separate step, so its number
+of branches is not limited to one per recombination round.
+
+During recombination, `clevRact` joins compatible signatures, checks whether the
+resulting branching structures can be embedded in the patient trees, and keeps
+the patients supporting each candidate trajectory. Because the trajectory search
+space grows with the number of filtered signatures, the number of variants per
+patient, and the allowed recombination depth, it is often best to start with
+strict support and signature filters and then relax them gradually.
+
+Trajectory significance estimation compares observed trajectory support with
+topology-aware background counts. The app can also apply the
+Benjamini-Hochberg adjustment to the resulting p-values. Trajectory scoring
+currently uses *Uniform label probabilities*. Its relative-occurrence denominator
+also requires the patient's tree to admit the candidate topology. Save the
+trajectory table with *Export Trajectory Data*.
+
+# Worked example: ten synthetic patients
+
+The packaged file `synthetic_10_patients.csv` contains ten artificial patient
+histories. It combines exact mutation matches, repeated gene labels, resolved
+and unresolved orders, branching structures and overlapping CNVs. All event
+placements are synthetic; the coordinates follow GRCh37.
+
+Patients p01--p08 have overlapping chromosome 9 deletions. Patients p01 and p02
+share exactly the same deletion boundaries; the other six deletions have unique
+boundaries. Patients p09 and p10 instead have a duplication and LOH event with
+overlapping intervals. These two events remain distinct CNV types.
+
+Every patient has a NOTCH1 event at the same position and a downstream FBXW7
+event at the same position. A second NOTCH1 event is placed as follows:
+
+| Patients | Relationship between the NOTCH1 events |
+|:---------|:---------------------------------------|
+| p01--p04 | Separate branches descending from the deletion clone |
+| p05--p06 | Two successive clones on the same lineage |
+| p07--p08 | Two events in one clone, with unresolved order |
+| p09--p10 | Separate branches meeting only through the germline root |
+
+The second NOTCH1 position is identical in p01--p08 and differs in p09--p10.
+PHF6 events on chromosome X in p03/p04 and DDX3Y events on chromosome Y in
+p09/p10 provide additional checks of reference-genome annotation. Two Boolean
+observation columns allow inspection of the temporal visualization.
+
+The following code creates the same cohort as the packaged CSV:
+
+```{r synthetic-example}
+patients <- sprintf("p%02d", seq_len(10))
+deletions <- data.frame(
+    start = c(21600000, 21600000, 21700000, 21800000,
+              21650000, 21750000, 21680000, 21780000),
+    end = c(22050000, 22050000, 22100000, 22200000,
+            22150000, 22080000, 22120000, 22180000)
+)
+
+example_event <- function(label, clone, parent, type, chromosome,
+                          start, end = start) {
+    data.frame(
+        Variant = label, Clone = clone, Parent = parent,
+        Variant.Type = type, Chromosome = chromosome,
+        Start = as.integer(start), End = as.integer(end)
+    )
+}
+
+example_cohort <- do.call(rbind, lapply(seq_along(patients), function(i) {
+    cnvs <- if (i <= 8) {
+        example_event("9p deletion", 1L, 0L, "CNV_del", "9",
+                      deletions$start[i], deletions$end[i])
+    } else {
+        rbind(
+            example_event("9p duplication", 1L, 0L, "CNV_dup", "9",
+                          23000000, 25000000),
+            example_event("9p LOH", 1L, 0L, "CNV_loh", "9",
+                          24000000, 26000000)
+        )
+    }
+    first_notch1 <- example_event(
+        "NOTCH1_A", 2L, 1L, "SNV/INDEL", "9", 139390656)
+    second_notch1 <- example_event(
+        if (i <= 8) "NOTCH1_B" else "NOTCH1_C",
+        if (i %in% 7:8) 2L else 3L,
+        if (i %in% 5:6) 2L else if (i <= 8) 1L else 0L,
+        "SNV/INDEL", "9", if (i <= 8) 139397640 else 139399365)
+    fbxw7 <- example_event(
+        "FBXW7", if (i %in% 7:8) 3L else 4L,
+        if (i %in% 5:6) 3L else 2L, "SNV/INDEL", "4", 153245299)
+    sex_chromosome <- if (i %in% 3:4) {
+        example_event("PHF6", 5L, 2L, "SNV/INDEL", "X", 133507300)
+    } else if (i %in% 9:10) {
+        example_event("DDX3Y", 5L, 0L, "SNV/INDEL", "Y", 15016050)
+    } else {
+        NULL
+    }
+    rows <- rbind(cnvs, first_notch1, second_notch1, fbxw7, sex_chromosome)
+    rows$Patient.ID <- patients[i]
+    rows$T1 <- rows$Clone <= 2L
+    rows$T2 <- TRUE
+    rows[, c("Patient.ID", "Variant", "Clone", "Parent", "Variant.Type",
+             "Chromosome", "Start", "End", "T1", "T2")]
+}))
+rownames(example_cohort) <- NULL
+head(example_cohort, 8)
+table(example_cohort$Patient.ID)
+```
+
+To locate the installed example for upload:
+
+```{r locate-synthetic-example}
+packaged_example <- system.file(
+    "extdata", "synthetic_10_patients.csv", package = "clevRact")
+stopifnot(file.exists(packaged_example))
+```
+
+Alternatively, write the generated cohort to your R session's temporary folder
+and upload the file identified by `example_file`:
+
+```{r write-synthetic-example}
+example_file <- file.path(tempdir(), "clevract-example.csv")
+utils::write.table(
+    example_cohort,
+    file = example_file,
+    sep = ";",
+    row.names = FALSE,
+    quote = TRUE,
+    na = "NA"
+)
+```
+
+## Reference settings and expected observations
+
+Load the file in *Input Data*. Inspect the table or switch to the plots to view
+individual histories at T1 and T2. In *Processed Data*, select GRCh37 label
+generation, gene-level SNV/INDEL summaries, *Use exact CNVs*, *No
+differentiation*, and no same-clone CNV summarization. Click *Generate Processed
+Data*. The processed cohort contains ten patients and 46 events. PHF6 and DDX3Y
+should retain their gene names after annotation.
+
+Compute signatures with minimum occurrences 2 and maximum length 2. Initially
+disable sequences within clones. Estimate significance with *Uniform label
+probabilities*. The following observations provide checks of the settings:
+
+| Setting or result | Expected patient support |
+|:------------------|-------------------------:|
+| Gene-level NOTCH1 followed by FBXW7, resolved order | 10 |
+| Gene-level NOTCH1 followed by NOTCH1, resolved order | 2 |
+| Gene-level NOTCH1 followed by NOTCH1, including within-clone orders | 4 |
+| Exact deletion `21600000--22050000` followed by NOTCH1 | 2 |
+| Regional deletion `21800000--22050000` followed by NOTCH1 | 8 |
+| Two parallel gene-level NOTCH1 events, resolved ancestry | 6 |
+| Exact-position `9_139390656` followed by `4_153245299` | 10 |
+| Exact-position `9_139390656` followed by `9_139397640`, resolved order | 2 |
+| Exact-position `9_139390656` followed by `9_139397640`, with within-clone orders | 4 |
+
+Some signatures omit intermediate events. For example, the shared
+NOTCH1-to-FBXW7 ordering remains present in p05/p06 even though the second
+NOTCH1 event lies between the two selected events.
+
+## P-values, filters and unresolved order
+
+Inspect the support and p-value columns after *Estimate Significance*. Change
+the estimation method to *Multiplicity-adjusted label probabilities* and
+estimate again to compare the two calculations. Restore *Uniform label
+probabilities* before the branching examples.
+
+Use the variant search field to select NOTCH1 or FBXW7 and try the absolute,
+relative-occurrence and p-value filters. The relative-occurrence denominator
+can differ between signatures, so it is not always the cohort size of ten.
+Before trajectory reconstruction, clear the search and set the signature
+filters to minimum absolute support 2, minimum relative occurrence 0, and maximum
+p-value 1. These values also apply when the filtered-table view is disabled.
+
+To test unresolved order, enable sequences within clones and recompute
+signatures. The NOTCH1-to-NOTCH1 signature gains p07 and p08, increasing support
+from two to four. This adds permitted orderings within their shared clone;
+it does not turn their two events into separate branches. Disable this option
+and recompute signatures before checking the resolved branching counts below.
+
+## CNV overlap and regional export
+
+Click *Analyze shared CNV regions* after signature computation. The exact
+deletion shared by p01/p02 supports a deletion-to-NOTCH1 signature in two
+patients. The other six exact deletions are individually below support two,
+but their extracted signatures still contribute to regional pooling. The
+common interval `21800000--22050000` is followed by NOTCH1 in all eight deletion
+patients. Its support is eight, counting each patient once despite two NOTCH1
+events per patient.
+
+The interval `24000000--25000000` is covered by both the duplication and LOH
+in p09/p10. The regional output retains distinct duplication and LOH signatures,
+each supported by two patients. The partition uses inclusive endpoints and
+does not merge these alteration types. Export the table with *Export region
+signatures*. The original signatures and patient trees remain unchanged.
+
+## Branching and recombination controls
+
+With resolved orders, minimum trajectory support 2, and two recombination
+rounds, enable repeated labels in multiple subclones. Enable independent
+branches through the root and compute trajectories. The two parallel NOTCH1
+events have support six: p01--p04 and p09/p10. Successive events in p05/p06 and
+same-clone events in p07/p08 do not support this branching structure.
+
+Disable independent branches and recompute. The two-event root branching
+structure is then absent. Ordinary reconstruction can still recover the shared
+exact deletion followed by two NOTCH1 branches, with FBXW7 descending from one
+NOTCH1 event, in p01/p02. Compare one and two recombination rounds to inspect
+how extensions are added to the retained linear basis. Disabling repeated labels
+prevents adding repeated-label branches; linear signatures with repeated labels
+remain available. Distinct exact-position labels can still form branches.
+
+After computing trajectories, try *Estimate significant trajectories*, both
+available p-value-adjustment settings, the result filters and *Export
+Trajectory Data*. The regional signature table is exported separately.
+
+## Exact-position and coarser embeddings
+
+To distinguish repeated gene labels from matches of the same mutation position,
+change the SNV/INDEL setting to *Use exact SNVs*, regenerate the processed data,
+and recompute signatures. The labels `9_139390656` and `4_153245299` identify
+the shared NOTCH1 and FBXW7 positions and have ordered support ten. The
+`9_139390656` to `9_139397640` signature has support two with resolved order
+and four with within-clone orderings enabled.
+
+Under exact-position encoding, the parallel pair `9_139390656` and
+`9_139397640` is supported by p01--p04, while the parallel pair
+`9_139390656` and `9_139399365` is supported by p09/p10. Their gene-level
+representation combines these as two NOTCH1 events in six patients. Exact SNV
+encoding here means chromosome and position; reference and alternate alleles
+are not part of the automatically generated label. Since the exact-position labels in this example
+are unique within each patient, the two p-value methods agree in this encoding.
+Allele-specific labels can
+instead be supplied directly with label generation disabled.
+
+For comparison, try chromosome-level or chromosome-arm CNV encoding. The eight
+deletions then share a coarser identifier, while interval-level refinement
+requires returning to exact CNVs. Enumeration can be compared with *No
+differentiation* to inspect its effect on repeated labels. Regenerate processed
+data and recompute results after each encoding change. Keep unenumerated exact
+CNVs for regional postprocessing.
+
+# Practical recommendations
+
+For larger cohorts, the most important practical strategy is to keep the first
+search intentionally strict:
+
+1. preprocess the data and inspect the cohort statistics;
+2. compute short signatures first;
+3. use a minimum occurrence threshold greater than one;
+4. filter signatures before trajectory approximation;
+5. increase signature length or recombination depth only after checking result
+   size and runtime.
+
+This workflow keeps the analysis exploratory while making the growth of the
+search space visible to the user.
+
+# Session information
+
+```{r session-info}
+sessionInfo()
+```

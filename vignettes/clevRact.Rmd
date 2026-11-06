@@ -3,13 +3,13 @@ title: "Using clevRact"
 author: "Malte Nick"
 date: "`r Sys.Date()`"
 output:
-  BiocStyle::html_document:
-    toc: true
-    toc_depth: 3
+    BiocStyle::html_document:
+        toc: true
+        toc_depth: 3
 vignette: >
-  %\VignetteIndexEntry{Using clevRact}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    %\VignetteIndexEntry{Using clevRact}
+    %\VignetteEngine{knitr::rmarkdown}
+    %\VignetteEncoding{UTF-8}
 ---
 
 **AI disclosure:** This documentation was generated with the assistance of AI
@@ -34,8 +34,8 @@ approximate conserved branching trajectories.
 
 # Installation and launching the app
 
-The development repository is <https://github.com/MalteNick/clevRact>.
-Once the package is available through Bioconductor, it can be installed with:
+The development repository is <https://github.com/MalteNick/clevRact>. Once the
+package is available through Bioconductor, it can be installed with:
 
 ```{r installation, eval=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
@@ -59,8 +59,8 @@ Start the application from an interactive R session:
 shiny::runApp(app)
 ```
 
-For an editor or remote session where the browser is opened separately, choose
-a local address and port:
+For an editor or remote session where the browser is opened separately, choose a
+local address and port:
 
 ```{r launch-localhost, eval=FALSE}
 shiny::runApp(app, host = "127.0.0.1", port = 3838, launch.browser = FALSE)
@@ -71,15 +71,16 @@ in the R console or Ctrl+C in a terminal.
 
 The following sections follow the five tabs of the application from left to
 right. The vignette does not launch the Shiny interface during package checks.
-Instead, it documents1 the expected input format and the main analysis steps so that the
-workflow can be reproduced with the example files installed in the package.
+Instead, it documents the expected input format and the main analysis steps so
+that the workflow can be reproduced with the example files installed in the
+package.
 
 # Example input file
 
-`clevRact` installs `synthetic_10_patients.csv` in `inst/extdata`. This artificial
-cohort can be uploaded directly in the application and provides coordinates for
-automatic annotation. The worked example below describes its construction and
-expected results.
+`clevRact` installs `synthetic_10_patients.csv` in `inst/extdata`. This
+artificial cohort can be uploaded directly in the application and provides
+coordinates for automatic annotation. The worked example below describes its
+construction and expected results.
 
 ```{r example-files}
 example_files <- list.files(
@@ -113,9 +114,9 @@ The required columns are:
 * `Variant`: variant label or identifier.
 * `Clone`: positive integer identifying the clone.
 * `Parent`: parent clone identifier. The value `0` represents the normal-cell
-  root.
+    root.
 * `Variant.Type`: one of `CNV_del`, `CNV_dup`, `CNV_loh`, `SNV/INDEL`, or
-  `NA`.
+    `NA`.
 * `Chromosome`: chromosome `1`--`22`, `X`, `Y`, or `NA`.
 * `Start` and `End`: genomic positions or `NA`.
 
@@ -157,7 +158,7 @@ click *Generate Processed Data* again.
 Important settings include:
 
 * generating variant labels from supplied labels or from GRCh37/GRCh38 genomic
-  positions;
+    positions;
 * representing SNVs/INDELs by gene or by exact chromosome-position labels;
 * representing CNVs by chromosome, chromosome arm, or exact interval;
 * retaining or enumerating repeated variant labels;
@@ -165,8 +166,8 @@ Important settings include:
 
 Set *Generate variant labels? = No* to keep the supplied `Variant` identifiers.
 Automatic GRCh37 or GRCh38 encoding uses the genomic coordinates and variant
-types in the input. Select the reference assembly matching the input coordinates.
-The packaged gene mappings include chromosome X and Y.
+types in the input. Select the reference assembly matching the input
+coordinates. The packaged gene mappings include chromosome X and Y.
 
 For analyses of repeated events, *No differentiation* retains shared labels.
 Enumeration distinguishes occurrences in their identifiers and is useful when
@@ -183,11 +184,11 @@ can compare the processed data with the original input.
 
 ## Data statistics
 
-The *Data Statistics* tab summarizes the processed cohort. These summaries
-are useful for biological inspection, but also for judging the computational
-scale of later steps. In particular, the number of patients, clones, variants,
-and recurrent variant labels directly influences how many candidate signatures
-and trajectories can be generated.
+The *Data Statistics* tab summarizes the processed cohort. These summaries are
+useful for biological inspection, but also for judging the computational scale
+of later steps. In particular, the number of patients, clones, variants, and
+recurrent variant labels directly influences how many candidate signatures and
+trajectories can be generated.
 
 The tab reports, among other summaries, patient counts by clone number, patient
 counts by variant number, chromosome distributions, variant recurrence across
@@ -204,11 +205,11 @@ than only sets of co-occurring variants.
 The user settings on the left side of the tab determine the actual computation:
 
 * *Minimum number of occurrences* determines the patient support required for
-  signatures to appear in the result table.
+    signatures to appear in the result table.
 * *Maximum signature length* controls the longest linear sequence that is
-  generated. Increasing this value can quickly enlarge the search space.
+    generated. Increasing this value can quickly enlarge the search space.
 * *Allow sequences within clone* controls whether multiple variants assigned to
-  the same clone may be ordered within one signature.
+    the same clone may be ordered within one signature.
 
 The filter controls above the result table are applied after computation. They
 are useful for exploration because they do not require recomputing the complete
@@ -220,10 +221,10 @@ signatures. The app adds relative occurrence and p-value information to the
 signature table. The dropdown offers:
 
 * *Uniform label probabilities*: each distinct alteration label in a patient
-  receives the same assignment probability under the approximate null model.
+    receives the same assignment probability under the approximate null model.
 * *Multiplicity-adjusted label probabilities*: assignment probabilities are
-  additionally multiplied by the numbers of matching event occurrences within
-  that patient.
+    additionally multiplied by the numbers of matching event occurrences within
+    that patient.
 
 Both methods use an upper-tail Poisson-binomial enrichment probability for the
 observed patient support. The default is *Uniform label probabilities*.
@@ -248,12 +249,12 @@ remain unchanged.
 
 The step uses the complete extracted signature catalogue, including signatures
 below the original result-table support threshold. It pools supporting patient
-IDs for identical regional signatures, counts each patient once, and applies
-the current *Minimum number of occurrences* threshold to the pooled results.
-This allows individually rare exact CNVs to contribute to a recurrent region.
-The regional table is separate from the original signature table and can be
-saved with *Export region signatures*. Source p-values and relative frequencies
-are not transferred to the pooled results.
+IDs for identical regional signatures, counts each patient once, and applies the
+current *Minimum number of occurrences* threshold to the pooled results. This
+allows individually rare exact CNVs to contribute to a recurrent region. The
+regional table is separate from the original signature table and can be saved
+with *Export region signatures*. Source p-values and relative frequencies are
+not transferred to the pooled results.
 
 Exact identifiers have a format such as `CNV_del_9_21600000_22050000` and can
 also be supplied directly with automatic label generation disabled. Interval
@@ -273,27 +274,27 @@ as a scalability step before the more expensive branching search is started.
 The main trajectory settings are:
 
 * *Minimum number of occurrences*: minimum number of patients in which an
-  intermediate or completed trajectory must be observed.
+    intermediate or completed trajectory must be observed.
 * *Number of recombinations*: maximum number of signature-recombination rounds.
-  Higher values allow larger branching structures, but increase the number of
-  pairwise combinations.
+    Higher values allow larger branching structures, but increase the number of
+    pairwise combinations.
 * *Include independent branches through the root?*: enables additional recurrent
-  trajectory bases whose branches meet at the variant-free root. It is enabled
-  by default. Disabling it leaves ordinary recombination of linear signatures
-  available.
+    trajectory bases whose branches meet at the variant-free root. It is enabled
+    by default. Disabling it leaves ordinary recombination of linear signatures
+    available.
 * *Allow the same variant to form multiple subclones*: allows the same variant
-  label to occur on separate branches, representing parallel occurrence in
-  distinct subpopulations.
+    label to occur on separate branches, representing parallel occurrence in
+    distinct subpopulations.
 
-Independent-root bases are computed directly from the processed cohort and
-must meet the trajectory patient-support threshold. They can be found even if
-no linear signature passes the filters. The repeated-label option must also be
+Independent-root bases are computed directly from the processed cohort and must
+meet the trajectory patient-support threshold. They can be found even if no
+linear signature passes the filters. The repeated-label option must also be
 enabled to find, for example, two parallel NOTCH1 events. Each supporting
 patient must contain separate event occurrences in the required branches.
 
 The recombination setting limits subsequent extensions by retained linear
-signatures. Independent-root initialization is a separate step, so its number
-of branches is not limited to one per recombination round.
+signatures. Independent-root initialization is a separate step, so its number of
+branches is not limited to one per recombination round.
 
 During recombination, `clevRact` joins compatible signatures, checks whether the
 resulting branching structures can be embedded in the patient trees, and keeps
@@ -303,11 +304,11 @@ patient, and the allowed recombination depth, it is often best to start with
 strict support and signature filters and then relax them gradually.
 
 Trajectory significance estimation compares observed trajectory support with
-topology-aware background counts. The app can also apply the
-Benjamini-Hochberg adjustment to the resulting p-values. Trajectory scoring
-currently uses *Uniform label probabilities*. Its relative-occurrence denominator
-also requires the patient's tree to admit the candidate topology. Save the
-trajectory table with *Export Trajectory Data*.
+topology-aware background counts. The app can also apply the Benjamini-Hochberg
+adjustment to the resulting p-values. Trajectory scoring currently uses *Uniform
+label probabilities*. Its relative-occurrence denominator also requires the
+patient's tree to admit the candidate topology. Save the trajectory table with
+*Export Trajectory Data*.
 
 # Worked example: ten synthetic patients
 
@@ -342,13 +343,13 @@ The following code creates the same cohort as the packaged CSV:
 patients <- sprintf("p%02d", seq_len(10))
 deletions <- data.frame(
     start = c(21600000, 21600000, 21700000, 21800000,
-              21650000, 21750000, 21680000, 21780000),
+                21650000, 21750000, 21680000, 21780000),
     end = c(22050000, 22050000, 22100000, 22200000,
             22150000, 22080000, 22120000, 22180000)
 )
 
 example_event <- function(label, clone, parent, type, chromosome,
-                          start, end = start) {
+                            start, end = start) {
     data.frame(
         Variant = label, Clone = clone, Parent = parent,
         Variant.Type = type, Chromosome = chromosome,
@@ -359,13 +360,13 @@ example_event <- function(label, clone, parent, type, chromosome,
 example_cohort <- do.call(rbind, lapply(seq_along(patients), function(i) {
     cnvs <- if (i <= 8) {
         example_event("9p deletion", 1L, 0L, "CNV_del", "9",
-                      deletions$start[i], deletions$end[i])
+                        deletions$start[i], deletions$end[i])
     } else {
         rbind(
             example_event("9p duplication", 1L, 0L, "CNV_dup", "9",
-                          23000000, 25000000),
+                            23000000, 25000000),
             example_event("9p LOH", 1L, 0L, "CNV_loh", "9",
-                          24000000, 26000000)
+                            24000000, 26000000)
         )
     }
     first_notch1 <- example_event(
@@ -390,7 +391,7 @@ example_cohort <- do.call(rbind, lapply(seq_along(patients), function(i) {
     rows$T1 <- rows$Clone <= 2L
     rows$T2 <- TRUE
     rows[, c("Patient.ID", "Variant", "Clone", "Parent", "Variant.Type",
-             "Chromosome", "Start", "End", "T1", "T2")]
+                "Chromosome", "Start", "End", "T1", "T2")]
 }))
 rownames(example_cohort) <- NULL
 head(example_cohort, 8)
@@ -443,7 +444,7 @@ probabilities*. The following observations provide checks of the settings:
 | Two parallel gene-level NOTCH1 events, resolved ancestry | 6 |
 | Exact-position `9_139390656` followed by `4_153245299` | 10 |
 | Exact-position `9_139390656` followed by `9_139397640`, resolved order | 2 |
-| Exact-position `9_139390656` followed by `9_139397640`, with within-clone orders | 4 |
+| Exact-position `9_139390656` followed by `9_139397640`, within clones | 4 |
 
 Some signatures omit intermediate events. For example, the shared
 NOTCH1-to-FBXW7 ordering remains present in p05/p06 even though the second
@@ -457,32 +458,32 @@ estimate again to compare the two calculations. Restore *Uniform label
 probabilities* before the branching examples.
 
 Use the variant search field to select NOTCH1 or FBXW7 and try the absolute,
-relative-occurrence and p-value filters. The relative-occurrence denominator
-can differ between signatures, so it is not always the cohort size of ten.
-Before trajectory reconstruction, clear the search and set the signature
-filters to minimum absolute support 2, minimum relative occurrence 0, and maximum
-p-value 1. These values also apply when the filtered-table view is disabled.
+relative-occurrence and p-value filters. The relative-occurrence denominator can
+differ between signatures, so it is not always the cohort size of ten. Before
+trajectory reconstruction, clear the search and set the signature filters to
+minimum absolute support 2, minimum relative occurrence 0, and maximum p-value
+1. These values also apply when the filtered-table view is disabled.
 
 To test unresolved order, enable sequences within clones and recompute
 signatures. The NOTCH1-to-NOTCH1 signature gains p07 and p08, increasing support
-from two to four. This adds permitted orderings within their shared clone;
-it does not turn their two events into separate branches. Disable this option
-and recompute signatures before checking the resolved branching counts below.
+from two to four. This adds permitted orderings within their shared clone; it
+does not turn their two events into separate branches. Disable this option and
+recompute signatures before checking the resolved branching counts below.
 
 ## CNV overlap and regional export
 
 Click *Analyze shared CNV regions* after signature computation. The exact
 deletion shared by p01/p02 supports a deletion-to-NOTCH1 signature in two
-patients. The other six exact deletions are individually below support two,
-but their extracted signatures still contribute to regional pooling. The
-common interval `21800000--22050000` is followed by NOTCH1 in all eight deletion
+patients. The other six exact deletions are individually below support two, but
+their extracted signatures still contribute to regional pooling. The common
+interval `21800000--22050000` is followed by NOTCH1 in all eight deletion
 patients. Its support is eight, counting each patient once despite two NOTCH1
 events per patient.
 
-The interval `24000000--25000000` is covered by both the duplication and LOH
-in p09/p10. The regional output retains distinct duplication and LOH signatures,
-each supported by two patients. The partition uses inclusive endpoints and
-does not merge these alteration types. Export the table with *Export region
+The interval `24000000--25000000` is covered by both the duplication and LOH in
+p09/p10. The regional output retains distinct duplication and LOH signatures,
+each supported by two patients. The partition uses inclusive endpoints and does
+not merge these alteration types. Export the table with *Export region
 signatures*. The original signatures and patient trees remain unchanged.
 
 ## Branching and recombination controls
@@ -502,8 +503,8 @@ prevents adding repeated-label branches; linear signatures with repeated labels
 remain available. Distinct exact-position labels can still form branches.
 
 After computing trajectories, try *Estimate significant trajectories*, both
-available p-value-adjustment settings, the result filters and *Export
-Trajectory Data*. The regional signature table is exported separately.
+available p-value-adjustment settings, the result filters and *Export Trajectory
+Data*. The regional signature table is exported separately.
 
 ## Exact-position and coarser embeddings
 
@@ -511,18 +512,18 @@ To distinguish repeated gene labels from matches of the same mutation position,
 change the SNV/INDEL setting to *Use exact SNVs*, regenerate the processed data,
 and recompute signatures. The labels `9_139390656` and `4_153245299` identify
 the shared NOTCH1 and FBXW7 positions and have ordered support ten. The
-`9_139390656` to `9_139397640` signature has support two with resolved order
-and four with within-clone orderings enabled.
+`9_139390656` to `9_139397640` signature has support two with resolved order and
+four with within-clone orderings enabled.
 
-Under exact-position encoding, the parallel pair `9_139390656` and
-`9_139397640` is supported by p01--p04, while the parallel pair
-`9_139390656` and `9_139399365` is supported by p09/p10. Their gene-level
-representation combines these as two NOTCH1 events in six patients. Exact SNV
-encoding here means chromosome and position; reference and alternate alleles
-are not part of the automatically generated label. Since the exact-position labels in this example
+Under exact-position encoding, the parallel pair `9_139390656` and `9_139397640`
+is supported by p01--p04, while the parallel pair `9_139390656` and
+`9_139399365` is supported by p09/p10. Their gene-level representation combines
+these as two NOTCH1 events in six patients. Exact SNV encoding here means
+chromosome and position; reference and alternate alleles are not part of the
+automatically generated label. Since the exact-position labels in this example
 are unique within each patient, the two p-value methods agree in this encoding.
-Allele-specific labels can
-instead be supplied directly with label generation disabled.
+Allele-specific labels can instead be supplied directly with label generation
+disabled.
 
 For comparison, try chromosome-level or chromosome-arm CNV encoding. The eight
 deletions then share a coarser identifier, while interval-level refinement
@@ -541,7 +542,7 @@ search intentionally strict:
 3. use a minimum occurrence threshold greater than one;
 4. filter signatures before trajectory approximation;
 5. increase signature length or recombination depth only after checking result
-   size and runtime.
+    size and runtime.
 
 This workflow keeps the analysis exploratory while making the growth of the
 search space visible to the user.

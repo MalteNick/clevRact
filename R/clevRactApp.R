@@ -9,18 +9,18 @@
 #' @examples
 #' app <- clevRactApp()
 #' if (interactive()) {
-#'   shiny::runApp(app)
+#'     shiny::runApp(app)
 #' }
 clevRactApp <- function() {
-  assets <- system.file("www", package = "clevRact")
-  if (!nzchar(assets)) {
-    stop("The clevRact web assets could not be found.", call. = FALSE)
-  }
+    assets <- system.file("www", package = "clevRact")
+    if (!nzchar(assets)) {
+        stop("The clevRact web assets could not be found.", call. = FALSE)
+    }
 
-  shiny::addResourcePath("clevRact-assets", assets)
+    shiny::addResourcePath("clevRact-assets", assets)
 
-  shiny::shinyApp(
-    ui = .build_ui(),
-    server = .build_server()
-  )
+    shiny::shinyApp(
+        ui = .build_ui(),
+        server = .build_server()
+    )
 }

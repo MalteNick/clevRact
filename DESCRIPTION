@@ -8,7 +8,8 @@ Authors@R:
             given = "Malte",
             family = "Nick",
             email = "malte.nick@uni-muenster.de",
-            role = c("aut", "cre")
+            role = c("aut", "cre"),
+            comment = c(ORCID = "0009-0008-2597-6460")
         ),
         person(
             given = "Sarah",

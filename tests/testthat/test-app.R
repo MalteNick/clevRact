@@ -9,7 +9,7 @@ test_that("the GUI exposes optional analysis controls without an About tab", {
   ui <- as.character(.build_ui())
   expect_false(grepl('data-value="About"', ui, fixed = TRUE))
   for (tab in c("Input Data", "Processed Data", "Data Statistics",
-    "Signature Computation", "Trajectory Approximation")) {
+    "Linear Trajectories", "Trajectory Reconstruction")) {
     expect_true(grepl(paste0('data-value="', tab, '"'), ui, fixed = TRUE))
   }
   for (id in c("compute_independent_root_branches", "postprocess_cnv_regions",

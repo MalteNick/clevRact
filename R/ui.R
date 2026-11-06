@@ -264,14 +264,14 @@
             ),
             paste(
                 "This tab is for showcasing the preprocessed dataset for",
-                "analysis before further Signature and Trajectory",
+                "analysis before further linear and branching trajectory",
                 "computation. It is generated from the input data which can",
                 "be changed in the Input Data tab and the settings below.",
                 "You can edit the data entries or the settings and press",
                 "the Generate Processed Data button for (re)processing.",
                 "Editing the input data without reprocessing will have no",
                 "effect on the processed data or the computed statistics",
-                "and signatures."
+                "and linear trajectories."
             )
         ), br(),
         div(style = "font-size: 25px;", strong("Settings")),
@@ -402,7 +402,10 @@
             br(), br(),
             paste(
                 "We recommend looking at these statistics carefully before",
-                "performing Signature and Trajectory computation as part of",
+                paste0(
+                    "performing linear and branching trajectory ",
+                    "computation as part of"
+                ),
                 "the underlying problems that need to be solved for this",
                 "computation are NP-complete and thus"
             ),
@@ -536,14 +539,20 @@
 .ui_signatures_sidebar <- function() {
     sidebarPanel(
         width = 3,
-        div(style = "font-size: 25px;", strong("Signature Computation")),
+        div(style = "font-size: 25px;", strong("Linear Trajectories")),
         div(
             style = "text-align: justify;",
             paste(
-                "This tab is for the configuration of Signature computation",
+                paste0(
+                    "This tab is for the configuration of Linear ",
+                    "trajectory computation"
+                ),
                 "and result showcasing. The settings below are for",
                 "determining the computation methods and result in a",
-                "complete dataframe including all signatures based on those",
+                paste0(
+                    "complete dataframe including all linear ",
+                    "trajectories based on those"
+                ),
                 "settings. The settings in the top bar are applied",
                 "afterwards in order to filter through the results",
                 "efficiently. Changing the settings in the top bar will not",
@@ -553,7 +562,10 @@
         ), tags$style(HTML("br { margin: 0; padding: 0; }")),
         div(
             style = "text-align: justify;",
-            "Click on a computed signature if you are interested in more",
+            paste0(
+                "Click on a computed linear trajectory if you are ",
+                "interested in more"
+            ),
             "details.",
         ),
         br(),
@@ -567,7 +579,7 @@
         ),
         numericInput(
             "signature_length_setter",
-            "Max. Signature length",
+            "Maximum linear trajectory length",
             value = 2,
             min = 2,
             max = 5
@@ -590,7 +602,7 @@
             style = "text-align: center;",
             actionButton(
                 "compute_signatures",
-                "Compute Signatures",
+                "Compute Linear Trajectories",
                 class = "btn btn-success",
                 width = "100%"
             )
@@ -616,14 +628,19 @@
         ),
         br(),
         strong("Optional CNV region analysis"),
-        p("After computing signatures, compare shared regions of exact CNVs."),
+        p(paste0(
+            "After computing linear trajectories, compare shared regions ",
+            "of exact CNVs."
+        )),
         actionButton("postprocess_cnv_regions", "Analyze shared CNV regions",
             class = "btn btn-success", width = "100%"
         ),
         div(
             style = "text-align: center; margin-top: 12px;",
-            downloadButton("export_cnv_regions", "Export region signatures",
-                class = "btn btn-success"
+            downloadButton("export_cnv_regions", paste0(
+                "Export regional trajectories"
+            ),
+            class = "btn btn-success"
             )
         )
     )
@@ -703,20 +720,20 @@
             style = "text-align: justify;",
             div(
                 style = "font-size: 25px;",
-                strong("Trajectory approximation")
+                strong("Trajectory reconstruction")
             ),
             paste(
-                "Previously computed Signatures (linear patterns) can be",
-                "combined to identify significantly enriched branching",
-                "structures, which we refer to as trajectories. By pressing",
+                "Previously computed linear trajectories can be",
+                "combined into larger patterns, including branching",
+                "trajectories. By pressing",
                 "the"
             ),
             em("Compute trajectories"),
             paste(
                 "button, the program will automatically filter all",
-                "Signatures given the filter configuration in the"
+                "linear trajectories given the filter configuration in the"
             ),
-            em("Signature Computation"),
+            em("Linear Trajectories"),
             paste(
                 "tab, no matter if the filter view is enabled or disabled."
             )
@@ -899,7 +916,7 @@
 
 .ui_signatures_tab <- function() {
     tabPanel(
-        "Signature Computation",
+        "Linear Trajectories",
         sidebarLayout(
             .ui_signatures_sidebar(),
             .ui_signatures_main()
@@ -909,7 +926,7 @@
 
 .ui_trajectories_tab <- function() {
     tabPanel(
-        "Trajectory Approximation",
+        "Trajectory Reconstruction",
         sidebarLayout(
             .ui_trajectories_sidebar(),
             .ui_trajectories_main()

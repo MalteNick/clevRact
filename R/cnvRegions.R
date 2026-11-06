@@ -111,7 +111,10 @@ postprocess_cnv_regions <- function(signature_information, minimum_support = 2L,
         # accepted. Never evaluate arbitrary imported R code.
         expression <- str2lang(as.character(signatures$Patients[i]))
         if (!is.call(expression) || !identical(expression[[1]], as.name("c"))) {
-            stop("Expected a literal patient vector in computed signatures.")
+            stop(
+                "Expected a literal patient vector in computed linear ",
+                "trajectories."
+            )
         }
         values <- as.list(expression)[-1L]
         if (!all(vapply(values, is.character, logical(1)))) {
@@ -126,7 +129,8 @@ postprocess_cnv_regions <- function(signature_information, minimum_support = 2L,
         combinations <- prod(lengths(choices))
         if (combinations > max_expansions_per_signature) {
             stop(
-                "CNV region expansion exceeds the limit for one signature; ",
+                "CNV region expansion exceeds the limit for one ",
+                "linear trajectory; ",
                 "restrict its length or catalogue."
             )
         }
@@ -196,7 +200,7 @@ postprocess_cnv_regions <- function(signature_information, minimum_support = 2L,
         coordinate_convention = partition$coordinate_convention,
         scope =
             paste0(
-                "Alternative CNV-region signatures computed after ext",
+                "Alternative CNV-region linear trajectories computed after ext",
                 "raction; no new patient-tree events or inherited sig",
                 "nificance"
             )

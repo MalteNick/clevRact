@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Explore shared patterns in cancer clonal evolution.</strong><br>
-  An interactive Shiny application for conserved evolutionary signatures and branching trajectories.
+  An interactive Shiny application for conserved linear trajectorys and branching trajectories.
 </p>
 
 <p align="center">
@@ -24,9 +24,10 @@ tumor trees. Starting from clone relationships and genomic variants, you can
 inspect your cohort, identify shared orders of events, and approximate conserved
 branching trajectories through a graphical interface.
 
-An **evolutionary signature** is a recurrent linear sequence of variants. A
-**trajectory** describes a branching pattern supported by multiple patient trees.
-The app uses supplied clone relationships as its starting point.
+A **trajectory** is a pattern of alteration events with a defined evolutionary
+structure. A **linear trajectory** follows a single chain of events. A
+**branching trajectory** contains a branch point, including at the variant-free
+root. The app uses supplied clone relationships as its starting point.
 
 ## From patient trees to shared trajectories
 
@@ -35,8 +36,8 @@ The app uses supplied clone relationships as its starting point.
 | **1. Input Data** | Import or edit a cohort and explore individual tumor trees with shark and dolphin plots powered by `clevRvis`. |
 | **2. Processed Data** | Generate labels using GRCh37 or GRCh38, choose gene or exact-position SNV/INDEL labels, and represent CNVs at chromosome, arm, or interval resolution. |
 | **3. Data Statistics** | Inspect cohort composition, clone counts, variant recurrence, and alteration types. |
-| **4. Signature Computation** | Find recurrent event sequences, estimate enrichment, and optionally pool overlapping CNVs into shared regional signatures. |
-| **5. Trajectory Approximation** | Recombine signatures into branching patterns, include independent branches through the root, estimate significance, and export results. |
+| **4. Linear Trajectories** | Find recurrent event sequences, estimate enrichment, and optionally pool overlapping CNVs into shared regional linear trajectories. |
+| **5. Trajectory Reconstruction** | Recombine linear trajectories into branching patterns, include independent branches through the root, estimate significance, and export results. |
 
 Repeated events can retain shared labels, allowing exploration of both successive
 and parallel occurrences of the same alteration. Support counts refer to distinct
@@ -101,7 +102,7 @@ example_file
 1. Upload this file in **Input Data**.
 2. In **Processed Data**, select **Yes, using GRCh37** for label generation,
    then click **Generate Processed Data**.
-3. Inspect **Data Statistics**, compute signatures, and explore trajectories.
+3. Inspect **Data Statistics**, compute linear trajectories, and explore trajectories.
 
 The [worked tutorial](vignettes/clevRact.Rmd) provides exact settings and expected
 results for repeated events, unresolved orders, independent branches, and CNV
@@ -131,8 +132,8 @@ Rows belonging to the same clone share the same parent; the normal-cell root has
 no variant row. Match the annotation assembly to your input coordinates when
 generating labels automatically.
 
-For a first analysis, start with short signatures and a minimum patient support
-greater than one. Inspect and filter the signatures before increasing trajectory
+For a first analysis, start with short linear trajectories and a minimum patient support
+greater than one. Inspect and filter the linear trajectories before increasing trajectory
 recombination depth, since larger searches can become computationally expensive.
 
 ## Documentation and support

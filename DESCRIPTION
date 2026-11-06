@@ -19,8 +19,8 @@ Authors@R:
     )
 Description: Provides an interactive Shiny application for exploring cancer
     clone evolution from longitudinal genomic variant data. The package
-    supports preparation, visualization, and statistical analysis of clonal
-    trajectories and mutational signatures. It is intended to make these
+    supports preparation, visualization, and statistical analysis of linear
+    and branching evolutionary trajectories. It is intended to make these
     analyses accessible through an interactive and reproducible workflow.
 License: LGPL-3
 URL: https://github.com/MalteNick/clevRact

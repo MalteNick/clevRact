@@ -29,7 +29,7 @@ an interactive Shiny application for exploratory analysis of conserved patterns
 in cohorts of patient-specific tumor phylogenies. The application is designed
 around a left-to-right workflow: raw input data are loaded or created first,
 then transformed into a processed representation, summarized with cohort
-statistics, analysed for recurrent linear signatures, and finally used to
+statistics, analysed for recurrent linear trajectories, and finally used to
 approximate conserved branching trajectories.
 
 # Installation and launching the app
@@ -150,10 +150,10 @@ measured biological quantities.
 ## Processed data
 
 The *Processed Data* tab transforms the raw table into the representation used
-for signature and trajectory computation. This step is intentionally separate
-from data input, because preprocessing choices can change the level of detail at
-which variants are analysed. After changing the raw data or these settings,
-click *Generate Processed Data* again.
+for linear trajectory and trajectory computation. This step is intentionally
+separate from data input, because preprocessing choices can change the level of
+detail at which variants are analysed. After changing the raw data or these
+settings, click *Generate Processed Data* again.
 
 Important settings include:
 
@@ -187,38 +187,41 @@ can compare the processed data with the original input.
 The *Data Statistics* tab summarizes the processed cohort. These summaries are
 useful for biological inspection, but also for judging the computational scale
 of later steps. In particular, the number of patients, clones, variants, and
-recurrent variant labels directly influences how many candidate signatures and
-trajectories can be generated.
+recurrent variant labels directly influences how many candidate linear
+trajectories and trajectories can be generated.
 
 The tab reports, among other summaries, patient counts by clone number, patient
 counts by variant number, chromosome distributions, variant recurrence across
 patients, CNV/SNV proportions, and the most frequent variants.
 
-## Signature computation
+## Linear trajectories
 
-An evolutionary signature is a recurrent linear sequence of variants observed in
-the processed tumor trees. `clevRact` enumerates possible linear paths through
-each patient tree and records in which patients identical variant sequences are
-observed. This means that signatures describe conserved orders of events rather
-than only sets of co-occurring variants.
+A trajectory is a pattern of alteration events with a defined evolutionary
+structure. A linear trajectory follows a single chain of events; a branching
+trajectory contains a branch point, including at the variant-free root.
+`clevRact` enumerates possible linear paths through each patient tree and
+records in which patients identical variant sequences are observed. This means
+that linear trajectories describe observed orders of events rather than only
+sets of co-occurring variants.
 
 The user settings on the left side of the tab determine the actual computation:
 
 * *Minimum number of occurrences* determines the patient support required for
-    signatures to appear in the result table.
-* *Maximum signature length* controls the longest linear sequence that is
+    linear trajectories to appear in the result table.
+* *Maximum linear trajectory length* controls the longest linear sequence that
+    is
     generated. Increasing this value can quickly enlarge the search space.
 * *Allow sequences within clone* controls whether multiple variants assigned to
-    the same clone may be ordered within one signature.
+    the same clone may be ordered within one linear trajectory.
 
 The filter controls above the result table are applied after computation. They
 are useful for exploration because they do not require recomputing the complete
-signature table.
+linear trajectory table.
 
 Significance estimation is also separated from enumeration. This allows users to
-compare available significance measures without recomputing the candidate
-signatures. The app adds relative occurrence and p-value information to the
-signature table. The dropdown offers:
+compare available significance measures without recomputing the candidate linear
+trajectories. The app adds relative occurrence and p-value information to the
+linear trajectory table. The dropdown offers:
 
 * *Uniform label probabilities*: each distinct alteration label in a patient
     receives the same assignment probability under the approximate null model.
@@ -235,26 +238,28 @@ than on the complete cohort.
 
 ### Optional CNV region analysis
 
-After computing signatures, *Analyze shared CNV regions* replaces exact CNV
-labels by alternative regional labels. It partitions each chromosome using the
-start positions and the positions immediately after the ends of all exact CNVs
-in the processed cohort. The partition is global across those patients and CNV
-types. Each regional label retains the type of the source CNV.
+After computing linear trajectories, *Analyze shared CNV regions* replaces exact
+CNV labels by alternative regional labels. It partitions each chromosome using
+the start positions and the positions immediately after the ends of all exact
+CNVs in the processed cohort. The partition is global across those patients and
+CNV types. Each regional label retains the type of the source CNV.
 
 For example, two overlapping deletions with different exact identifiers can
-support the same regional deletion-to-gene signature. A source CNV spanning
-several regions produces alternative regional signatures. These are separate
-descriptions of the same event. Original patient trees and original signatures
-remain unchanged.
+support the same regional deletion-to-gene linear trajectory. A source CNV
+spanning several regions produces alternative regional linear trajectories.
+These are separate descriptions of the same event. Original patient trees and
+original linear trajectories remain unchanged.
 
-The step uses the complete extracted signature catalogue, including signatures
-below the original result-table support threshold. It pools supporting patient
-IDs for identical regional signatures, counts each patient once, and applies the
-current *Minimum number of occurrences* threshold to the pooled results. This
-allows individually rare exact CNVs to contribute to a recurrent region. The
-regional table is separate from the original signature table and can be saved
-with *Export region signatures*. Source p-values and relative frequencies are
-not transferred to the pooled results.
+The step uses the complete extracted linear trajectory catalogue, including
+linear trajectories below the original result-table support threshold. It pools
+supporting patient IDs for identical regional linear trajectories, counts each
+patient once, and applies the current *Minimum number of occurrences* threshold
+to the pooled results. This allows individually rare exact CNVs to contribute to
+a recurrent region. The regional table is separate from the original linear
+trajectory table and can be saved with *Export regional trajectories*. Source
+p-values and relative frequencies are not transferred to the pooled results. The
+CSV column `Source signatures` counts the original linear trajectories pooled
+into each regional result.
 
 Exact identifiers have a format such as `CNV_del_9_21600000_22050000` and can
 also be supplied directly with automatic label generation disabled. Interval
@@ -263,45 +268,48 @@ the application shows an error notification. In a mixed catalogue, only
 recognizable exact CNV labels are regionalized. Chromosome-arm labels alone
 cannot supply the missing boundaries.
 
-## Trajectory approximation
+## Trajectory reconstruction
 
-The *Trajectory Approximation* tab recombines previously computed linear
-signatures into branching structures called trajectories. The trajectory search
-uses the current filters from the *Signature Computation* tab, whether or not
-the filtered table view is enabled. The signature filters can therefore be used
-as a scalability step before the more expensive branching search is started.
+The *Trajectory Reconstruction* tab recombines previously computed linear
+trajectories into larger patterns, including branching trajectories. The
+trajectory search uses the current filters from the *Linear Trajectories* tab,
+whether or not the filtered table view is enabled. The linear trajectory filters
+can therefore be used as a scalability step before the more expensive branching
+search is started.
 
 The main trajectory settings are:
 
 * *Minimum number of occurrences*: minimum number of patients in which an
     intermediate or completed trajectory must be observed.
-* *Number of recombinations*: maximum number of signature-recombination rounds.
+* *Number of recombinations*: maximum number of linear trajectory-recombination
+    rounds.
     Higher values allow larger branching structures, but increase the number of
     pairwise combinations.
 * *Include independent branches through the root?*: enables additional recurrent
     trajectory bases whose branches meet at the variant-free root. It is enabled
-    by default. Disabling it leaves ordinary recombination of linear signatures
-    available.
+    by default. Disabling it leaves ordinary recombination of linear
+    trajectories available.
 * *Allow the same variant to form multiple subclones*: allows the same variant
     label to occur on separate branches, representing parallel occurrence in
     distinct subpopulations.
 
 Independent-root bases are computed directly from the processed cohort and must
 meet the trajectory patient-support threshold. They can be found even if no
-linear signature passes the filters. The repeated-label option must also be
+linear trajectory passes the filters. The repeated-label option must also be
 enabled to find, for example, two parallel NOTCH1 events. Each supporting
 patient must contain separate event occurrences in the required branches.
 
 The recombination setting limits subsequent extensions by retained linear
-signatures. Independent-root initialization is a separate step, so its number of
-branches is not limited to one per recombination round.
+trajectories. Independent-root initialization is a separate step, so its number
+of branches is not limited to one per recombination round.
 
-During recombination, `clevRact` joins compatible signatures, checks whether the
-resulting branching structures can be embedded in the patient trees, and keeps
-the patients supporting each candidate trajectory. Because the trajectory search
-space grows with the number of filtered signatures, the number of variants per
-patient, and the allowed recombination depth, it is often best to start with
-strict support and signature filters and then relax them gradually.
+During recombination, `clevRact` joins compatible linear trajectories, checks
+whether the resulting branching structures can be embedded in the patient trees,
+and keeps the patients supporting each candidate trajectory. Because the
+trajectory search space grows with the number of filtered linear trajectories,
+the number of variants per patient, and the allowed recombination depth, it is
+often best to start with strict support and linear trajectory filters and then
+relax them gradually.
 
 Trajectory significance estimation compares observed trajectory support with
 topology-aware background counts. The app can also apply the Benjamini-Hochberg
@@ -430,9 +438,9 @@ differentiation*, and no same-clone CNV summarization. Click *Generate Processed
 Data*. The processed cohort contains ten patients and 46 events. PHF6 and DDX3Y
 should retain their gene names after annotation.
 
-Compute signatures with minimum occurrences 2 and maximum length 2. Initially
-disable sequences within clones. Estimate significance with *Uniform label
-probabilities*. The following observations provide checks of the settings:
+Compute linear trajectories with minimum occurrences 2 and maximum length 2.
+Initially disable sequences within clones. Estimate significance with *Uniform
+label probabilities*. The following observations provide checks of the settings:
 
 | Setting or result | Expected patient support |
 |:------------------|-------------------------:|
@@ -446,7 +454,7 @@ probabilities*. The following observations provide checks of the settings:
 | Exact-position `9_139390656` followed by `9_139397640`, resolved order | 2 |
 | Exact-position `9_139390656` followed by `9_139397640`, within clones | 4 |
 
-Some signatures omit intermediate events. For example, the shared
+Some linear trajectories omit intermediate events. For example, the shared
 NOTCH1-to-FBXW7 ordering remains present in p05/p06 even though the second
 NOTCH1 event lies between the two selected events.
 
@@ -459,32 +467,35 @@ probabilities* before the branching examples.
 
 Use the variant search field to select NOTCH1 or FBXW7 and try the absolute,
 relative-occurrence and p-value filters. The relative-occurrence denominator can
-differ between signatures, so it is not always the cohort size of ten. Before
-trajectory reconstruction, clear the search and set the signature filters to
-minimum absolute support 2, minimum relative occurrence 0, and maximum p-value
+differ between linear trajectories, so it is not always the cohort size of ten.
+Before trajectory reconstruction, clear the search and set the linear trajectory
+filters to minimum absolute support 2, minimum relative occurrence 0, and
+maximum p-value
 1. These values also apply when the filtered-table view is disabled.
 
-To test unresolved order, enable sequences within clones and recompute
-signatures. The NOTCH1-to-NOTCH1 signature gains p07 and p08, increasing support
-from two to four. This adds permitted orderings within their shared clone; it
-does not turn their two events into separate branches. Disable this option and
-recompute signatures before checking the resolved branching counts below.
+To test unresolved order, enable sequences within clones and recompute linear
+trajectories. The NOTCH1-to-NOTCH1 linear trajectory gains p07 and p08,
+increasing support from two to four. This adds permitted orderings within their
+shared clone; it does not turn their two events into separate branches. Disable
+this option and recompute linear trajectories before checking the resolved
+branching counts below.
 
 ## CNV overlap and regional export
 
-Click *Analyze shared CNV regions* after signature computation. The exact
-deletion shared by p01/p02 supports a deletion-to-NOTCH1 signature in two
-patients. The other six exact deletions are individually below support two, but
-their extracted signatures still contribute to regional pooling. The common
-interval `21800000--22050000` is followed by NOTCH1 in all eight deletion
-patients. Its support is eight, counting each patient once despite two NOTCH1
-events per patient.
+Click *Analyze shared CNV regions* after linear trajectory computation. The
+exact deletion shared by p01/p02 supports a deletion-to-NOTCH1 linear trajectory
+in two patients. The other six exact deletions are individually below support
+two, but their extracted linear trajectories still contribute to regional
+pooling. The common interval `21800000--22050000` is followed by NOTCH1 in all
+eight deletion patients. Its support is eight, counting each patient once
+despite two NOTCH1 events per patient.
 
 The interval `24000000--25000000` is covered by both the duplication and LOH in
-p09/p10. The regional output retains distinct duplication and LOH signatures,
-each supported by two patients. The partition uses inclusive endpoints and does
-not merge these alteration types. Export the table with *Export region
-signatures*. The original signatures and patient trees remain unchanged.
+p09/p10. The regional output retains distinct duplication and LOH linear
+trajectories, each supported by two patients. The partition uses inclusive
+endpoints and does not merge these alteration types. Export the table with
+*Export regional trajectories*. The original linear trajectories and
+patient trees remain unchanged.
 
 ## Branching and recombination controls
 
@@ -499,21 +510,21 @@ structure is then absent. Ordinary reconstruction can still recover the shared
 exact deletion followed by two NOTCH1 branches, with FBXW7 descending from one
 NOTCH1 event, in p01/p02. Compare one and two recombination rounds to inspect
 how extensions are added to the retained linear basis. Disabling repeated labels
-prevents adding repeated-label branches; linear signatures with repeated labels
-remain available. Distinct exact-position labels can still form branches.
+prevents adding repeated-label branches; linear trajectories with repeated
+labels remain available. Distinct exact-position labels can still form branches.
 
 After computing trajectories, try *Estimate significant trajectories*, both
 available p-value-adjustment settings, the result filters and *Export Trajectory
-Data*. The regional signature table is exported separately.
+Data*. The regional linear trajectory table is exported separately.
 
 ## Exact-position and coarser embeddings
 
 To distinguish repeated gene labels from matches of the same mutation position,
 change the SNV/INDEL setting to *Use exact SNVs*, regenerate the processed data,
-and recompute signatures. The labels `9_139390656` and `4_153245299` identify
-the shared NOTCH1 and FBXW7 positions and have ordered support ten. The
-`9_139390656` to `9_139397640` signature has support two with resolved order and
-four with within-clone orderings enabled.
+and recompute linear trajectories. The labels `9_139390656` and `4_153245299`
+identify the shared NOTCH1 and FBXW7 positions and have ordered support ten. The
+`9_139390656` to `9_139397640` linear trajectory has support two with resolved
+order and four with within-clone orderings enabled.
 
 Under exact-position encoding, the parallel pair `9_139390656` and `9_139397640`
 is supported by p01--p04, while the parallel pair `9_139390656` and
@@ -538,11 +549,11 @@ For larger cohorts, the most important practical strategy is to keep the first
 search intentionally strict:
 
 1. preprocess the data and inspect the cohort statistics;
-2. compute short signatures first;
+2. compute short linear trajectories first;
 3. use a minimum occurrence threshold greater than one;
-4. filter signatures before trajectory approximation;
-5. increase signature length or recombination depth only after checking result
-    size and runtime.
+4. filter linear trajectories before trajectory reconstruction;
+5. increase linear trajectory length or recombination depth only after
+    checking result size and runtime.
 
 This workflow keeps the analysis exploratory while making the growth of the
 search space visible to the user.

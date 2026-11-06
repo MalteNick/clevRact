@@ -570,10 +570,10 @@ set_signature_computation_panel_to_blank <- function(output, state) {
                 HTML(
                     paste0(
                         paste0(
-                            "No Signatures computed. Configure your s",
+                            "No linear trajectories computed. Configure your s",
                             "ettings and click the "
                         ),
-                        as.character(em("Compute Signatures")),
+                        as.character(em("Compute Linear Trajectories")),
                         "&nbsp;button."
                     )
                 ),
@@ -1791,9 +1791,12 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
 
         showModal(
             modalDialog(
-                title = "Computing Signatures",
+                title = "Computing Linear Trajectories",
                 div(
-                    "Computing Signatures, this process may take a while...",
+                    paste0(
+                        "Computing Linear Trajectories, this process may ",
+                        "take a while..."
+                    ),
                     div(
                         withLoader(
                             img(
@@ -1860,7 +1863,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
             }
             showNotification(
                 paste(
-                    "No linear signatures meet the current criteria.",
+                    "No linear trajectories meet the current criteria.",
                     paste0(
                         "Independent root branches can still be compu",
                         "ted in the trajectory tab."
@@ -2051,7 +2054,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
     observeEvent(input$postprocess_cnv_regions, {
         if (is.null(state$signature_side_information)) {
             showNotification(
-                "Compute signatures before analyzing CNV regions.",
+                "Compute linear trajectories before analyzing CNV regions.",
                 type =
                     "message"
             )
@@ -2078,7 +2081,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
         }
         state$cnv_region_result <- result
         output$cnv_region_panel <- renderUI(tagList(
-            h3("Shared CNV region signatures"),
+            h3("Shared CNV region linear trajectories"),
             p(paste0(
                 "Each region is an alternative description of one CNV",
                 " event. Counts are unique patients; significance mus",
@@ -2096,7 +2099,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
 
 .register_export_cnv_regions <- function(input, output, session, state) {
     output$export_cnv_regions <- downloadHandler(
-        filename = function() "cnv-region-signatures.csv",
+        filename = function() "cnv-region-linear-trajectories.csv",
         content = function(file) {
             req(state$cnv_region_result)
             write.csv(state$cnv_region_result$signatures, file,
@@ -2113,7 +2116,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
             is.null(state$signature_data_set) &&
                 is.null(state$filtered_signature_data_set)
         ) {
-            showNotification("No signatures computed yet.",
+            showNotification("No linear trajectories computed yet.",
                 type = "message",
                 duration = 3
             )
@@ -2216,7 +2219,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
         showModal(modalDialog(
             title = tags$div(
                 style = "font-weight: bold;",
-                "Signature Statistics"
+                "Linear Trajectory Statistics"
             ),
             div(
                 h3(
@@ -2257,7 +2260,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
                 div(
                     paste(
                         paste0(
-                            "The signatures defined through your filt",
+                            "The linear trajectories defined through your filt",
                             "ers will now be"
                         ),
                         paste0(
@@ -2377,7 +2380,7 @@ set_trajectory_approximation_panel_to_blank <- function(output, state) {
             showNotification(
                 paste(
                     "Cannot process trajectories without precomputed and",
-                    "estimated signatures"
+                    "estimated linear trajectories"
                 ),
                 type = "message",
                 duration = 3
